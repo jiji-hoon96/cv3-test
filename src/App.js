@@ -3,6 +3,10 @@ import { BsQuestionCircle } from "react-icons/bs";
 import Footer from "./components/Footer";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import "react-tippy/dist/tippy.css";
+import { Tooltip } from "react-tippy";
+import makeTime from "./utils/time";
+import findPlatform from "./utils/platform";
 
 function App() {
   const [items, setItems] = useState([]);
@@ -32,16 +36,6 @@ function App() {
         console.error(error);
       });
   }, []);
-
-  const makeTime = (time) => {
-    const year = parseInt("20" + time.substr(0, 2)); // 년도는 2000년 이후로 가정합니다.
-    const month = time.substr(2, 2);
-    const day = time.substr(4, 2);
-    const hour = time.substr(6, 2);
-    const minute = time.substr(8, 2);
-    const formattedTime = `${year}.${month}.${day} ${hour}:${minute}`;
-    return `${formattedTime}`;
-  };
 
   const typeChange = (item) => {
     let arr = [];
@@ -84,18 +78,6 @@ function App() {
   const MaxSales = modifiedData.map((item) => item.sales);
   const MaxViews = modifiedData.map((item) => item.view);
 
-  const findPlatform = (name) => {
-    if (name === "naver") {
-      return "네이버쇼핑LIVE";
-    } else if (name === "coupang") {
-      return "쿠팡라이브";
-    } else if (name === "cjonstyle") {
-      return "CJ온스타일";
-    } else {
-      return "카카오쇼핑LIVE";
-    }
-  };
-
   maxitems.push(
     Math.max(...MaxTotalSales),
     Math.max(...MaxSales),
@@ -129,14 +111,28 @@ function App() {
               </div>
               <div className="flex justify-center items-center w-10%">
                 <div>판매량</div>
-                <BsQuestionCircle
-                  className="ml-1"
-                  data-popover-target="popover-default"
-                />
+                <Tooltip
+                  title="판매량"
+                  position="right"
+                  trigger="mouseenter"
+                  animation="scale"
+                >
+                  <BsQuestionCircle
+                    className="ml-1"
+                    data-popover-target="popover-default"
+                  />
+                </Tooltip>
               </div>
               <div className="flex justify-center items-center w-13%">
                 <div>매출액</div>
-                <BsQuestionCircle className="ml-1" />
+                <Tooltip
+                  title="매출액"
+                  position="right"
+                  trigger="mouseenter"
+                  animation="scale"
+                >
+                  <BsQuestionCircle className="ml-1" />
+                </Tooltip>
               </div>
               <div className="flex items-center justify-center w-8%">
                 상품수
@@ -151,7 +147,14 @@ function App() {
                   <div className="w-4% text-orange-400 py-0 px-2 font-bold">
                     {index + 1}
                   </div>
-                  <div className="flex flex-col justify-center  py-0 px-2 w-31% truncate ">
+                  <div
+                    className="flex flex-col justify-center  py-0 px-2 w-31% truncate hover:cursor-pointer"
+                    onClick={() =>
+                      window.open(
+                        `https://datalab.labangba.com/report/labang/${item.url}`
+                      )
+                    }
+                  >
                     <span className="text-base font-medium text-black">
                       {item.title}
                     </span>
@@ -211,7 +214,6 @@ function App() {
                         } bg-amber-100 absolute rounded -z-10 left-0 h-7 top-[-5px]`}
                       />
                     </div>
-                    <h1></h1>
                     {`${Math.round(item.total_sales / 1000000) / 100}억`}
                   </span>
                   <div className="text-black text-base font-normal   py-0 px-2 text-center w-8%">
