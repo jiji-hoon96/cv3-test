@@ -1,8 +1,107 @@
 import Header from "./components/Header";
 import { BsQuestionCircle } from "react-icons/bs";
 import Footer from "./components/Footer";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 function App() {
+  const [items, setItems] = useState([]);
+  const [types, setTypes] = useState([]);
+  let maxitems = [];
+  useEffect(() => {
+    axios({
+      method: "get", // 통신 방식
+      url: "/data", // 서버
+    })
+      .then(({ data }) => {
+        setItems(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+    axios({
+      method: "post",
+      url: "https://datalab.labangba.com/home/gnb",
+      headers: { "Content-Type": "application/json" },
+    })
+      .then(({ data }) => {
+        setTypes(data.cats);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }, []);
+
+  const makeTime = (time) => {
+    const year = parseInt("20" + time.substr(0, 2)); // 년도는 2000년 이후로 가정합니다.
+    const month = time.substr(2, 2);
+    const day = time.substr(4, 2);
+    const hour = time.substr(6, 2);
+    const minute = time.substr(8, 2);
+    const formattedTime = `${year}.${month}.${day} ${hour}:${minute}`;
+    return `${formattedTime}`;
+  };
+
+  const typeChange = (item) => {
+    let arr = [];
+    let name;
+
+    Object.entries(types).forEach((type) => {
+      const key = type[0];
+      const value = type[1];
+
+      if (item === +key) arr = [...arr, value.pid];
+    });
+
+    Object.entries(types).forEach((type) => {
+      const key = type[0];
+      const value = type[1];
+
+      if (arr[0] === +key) name = value.name;
+    });
+
+    return name;
+  };
+
+  const modifiedData =
+    items &&
+    items.map((item) => {
+      return {
+        id: typeChange(item.cid),
+        date: makeTime(item.datetime_start),
+        url: item.objectID,
+        platform: item.platform_id,
+        product: item.product_cnt,
+        total_sales: item.sales_amt,
+        sales: item.sales_cnt,
+        title: item.title,
+        view: item.visit_cnt,
+      };
+    });
+
+  const MaxTotalSales = modifiedData.map((item) => item.total_sales);
+  const MaxSales = modifiedData.map((item) => item.sales);
+  const MaxViews = modifiedData.map((item) => item.view);
+
+  const findPlatform = (name) => {
+    if (name === "naver") {
+      return "네이버쇼핑LIVE";
+    } else if (name === "coupang") {
+      return "쿠팡라이브";
+    } else if (name === "cjonstyle") {
+      return "CJ온스타일";
+    } else {
+      return "카카오쇼핑LIVE";
+    }
+  };
+
+  maxitems.push(
+    Math.max(...MaxTotalSales),
+    Math.max(...MaxSales),
+    Math.max(...MaxViews)
+  );
+
   return (
     <>
       <Header />
@@ -16,47 +115,111 @@ function App() {
         </span>
         <div className="w-full overflow-x-auto">
           <div className="overflow-hidden min-w-max">
-            <div className="grid grid-cols-7 p-4 text-sm font-medium text-gray-900 border-t border-b-2 border-gray-200 gap-x-8 border-solid ">
-              <div className="flex items-center justify-center">방송정보</div>
-              <div className="flex items-center justify-center">분류</div>
-              <div className="flex items-center justify-center">방송시간 </div>
-              <div className="flex items-center justify-center">조회수</div>
-              <div className="flex justify-center items-center">
+            <div className="flex p-4 text-sm font-medium text-gray-900 border-t border-b-2 border-gray-200 border-solid ">
+              <div className="flex items-center justify-center w-4%"></div>
+              <div className="flex items-center justify-center w-31%">
+                방송정보
+              </div>
+              <div className="flex items-center justify-center w-12%">분류</div>
+              <div className="flex items-center justify-center w-12%">
+                방송시간{" "}
+              </div>
+              <div className="flex items-center justify-center w-10%">
+                조회수
+              </div>
+              <div className="flex justify-center items-center w-10%">
                 <div>판매량</div>
                 <BsQuestionCircle
                   className="ml-1"
                   data-popover-target="popover-default"
                 />
               </div>
-              <div className="flex justify-center items-center">
+              <div className="flex justify-center items-center w-13%">
                 <div>매출액</div>
                 <BsQuestionCircle className="ml-1" />
               </div>
-              <div className="flex items-center justify-center">상품수</div>
-            </div>
-            <div className="grid grid-cols-7 px-4 py-5 text-sm text-gray-700 border-b border-gray-200 gap-x-8 dark:border-gray-700">
-              <div className="text-gray-500 dark:text-gray-400 text-center">
-                1. 안녕
-              </div>
-              <div className="text-gray-500 dark:text-gray-400 text-center">
-                잘가
-              </div>
-              <div className="text-gray-500 dark:text-gray-400 text-center">
-                배고파
-              </div>
-              <div className="text-gray-500 dark:text-gray-400 text-center">
-                메롱
-              </div>
-              <div className="text-gray-500 dark:text-gray-400 text-center">
-                하하하
-              </div>
-              <div className="text-gray-500 dark:text-gray-400 text-center">
-                키키
-              </div>
-              <div className="text-gray-500 dark:text-gray-400 text-center">
-                짱구
+              <div className="flex items-center justify-center w-8%">
+                상품수
               </div>
             </div>
+            {modifiedData.map((item, index) => {
+              return (
+                <div
+                  key={index}
+                  className=" flex text-sm text-gray-700 border-b border-gray-100  h-14 items-center border-solid"
+                >
+                  <div className="w-4% text-orange-400 py-0 px-2 font-bold">
+                    {index + 1}
+                  </div>
+                  <div className="flex flex-col justify-center  py-0 px-2 w-31% truncate ">
+                    <span className="text-base font-medium text-black">
+                      {item.title}
+                    </span>
+                    <span className=" text-gray-400 text-base font-normal">
+                      {findPlatform(item.platform)}
+                    </span>
+                  </div>
+                  <div className="text-black text-base font-normal py-0 px-2 text-center w-12%">
+                    {item.id}
+                  </div>
+                  <div className=" py-0 px-2 text-center w-12% flex items-center flex-col justify-center">
+                    <span className="text-black text-base font-normal leading-5">
+                      {item.date.slice(0, 10)}
+                    </span>
+                    <span className="text-base font-normal text-gray-500">
+                      {item.date.slice(11)}
+                    </span>
+                  </div>
+
+                  <span className=" pr-4 text-right relative w-10% text-black text-base font-normal">
+                    <div className="py-0 px-2 text-center absolute -z-10 right-2 w-20">
+                      <div
+                        className={`w-${
+                          Math.floor((item.view * 100) / maxitems[2]) !== 100
+                            ? Math.floor((item.view * 100) / maxitems[2]) + "%"
+                            : "full"
+                        } bg-amber-100 absolute rounded -z-10 left-0 h-7 top-[-5px]`}
+                      />
+                    </div>
+                    {item.view / 10000 >= 1
+                      ? `${parseFloat((item.view / 10000).toFixed(1))}만`
+                      : item.view.toLocaleString()}
+                  </span>
+                  <span className=" pr-4 text-right relative w-10% text-black text-base font-normal">
+                    <div className="py-0 px-2 text-center absolute -z-10 right-2 w-20">
+                      <div
+                        className={`w-${
+                          Math.floor((item.sales * 100) / maxitems[1]) !== 100
+                            ? Math.floor((item.sales * 100) / maxitems[1]) + "%"
+                            : "full"
+                        } bg-amber-100 absolute rounded -z-10 left-0 h-7 top-[-5px]`}
+                      />
+                    </div>
+
+                    {item.sales.toLocaleString()}
+                  </span>
+                  <span className=" pr-4 text-right relative w-10% text-black text-base font-normal">
+                    <div className="py-0 px-2 text-center absolute -z-10 right-2 w-20">
+                      <div
+                        className={`w-${
+                          Math.floor((item.total_sales * 100) / maxitems[0]) !==
+                          100
+                            ? Math.floor(
+                                (item.total_sales * 100) / maxitems[0]
+                              ) + "%"
+                            : "full"
+                        } bg-amber-100 absolute rounded -z-10 left-0 h-7 top-[-5px]`}
+                      />
+                    </div>
+                    <h1></h1>
+                    {`${Math.round(item.total_sales / 1000000) / 100}억`}
+                  </span>
+                  <div className="text-black text-base font-normal   py-0 px-2 text-center w-8%">
+                    {item.product}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
